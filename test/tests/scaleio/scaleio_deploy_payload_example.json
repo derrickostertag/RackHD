@@ -1,0 +1,48 @@
+{
+    "name": "Graph.Deploy.ScaleIo",
+    "options": {
+       "install-mdm-master-graph": {
+           "graphOptions": {
+              "target": "58beed14a40ec8177b071397",
+              "defaults": {
+                 "path": "/tmp",
+                 "username": "root",
+                 "password": "onrack",
+                 "host": "172.31.128.120"
+              }
+          }
+       },
+       "install-mdm-standby-graph": {
+           "graphOptions": {
+              "target": "58beed14a40ec8177b071397",
+              "defaults": {
+                 "path": "/tmp",
+                 "username": "root",
+                 "password": "onrack",
+                 "host": "172.31.128.130"
+              }
+          }
+       },
+       "install-tb-graph": {
+           "graphOptions": {
+              "target": "58beed14a40ec8177b071397",
+              "defaults": {
+                 "path": "/tmp",
+                 "username": "root",
+                 "password": "onrack",
+                 "host": "172.31.128.140"
+              }
+          }
+       },
+       "cluster-scaleio-3node-graph": {
+           "graphOptions": {
+              "target": "58beed14a40ec8177b071397",
+              "defaults": {
+                 "username": "root",
+                 "password": "onrack",
+                 "host": "172.31.128.120"
+              }
+          }
+       }
+    }
+}
