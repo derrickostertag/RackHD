@@ -11,7 +11,7 @@ put something herex`
 
 import fit_path  # NOQA: unused import
 import unittest
-from json import dumps
+import json
 
 
 # import nose decorator attr
@@ -66,7 +66,7 @@ class deploy_scaleio(unittest.TestCase):
         self.assertNotEqual([], nodes, msg=("No Nodes in List"))
 
         # Log the list of nodes
-        logs.info(" %s", dumps(nodes, indent=4))
+        logs.info(" %s", json.dumps(nodes, indent=4))
 
 #    @depends(after=test_get_nodes)
     def test_get_nodes_rackhdapi(self):
@@ -92,19 +92,23 @@ class deploy_scaleio(unittest.TestCase):
             self.fail("No Json data in repsonse")
         for node in nodes:
             nodelist.append(node.get('id'))
-        logs.info(" %s", dumps(nodelist, indent=4))
+        logs.info(" %s", json.dumps(nodelist, indent=4))
 
         # example to set the class level nodelist
         self.__class__.nodes = nodelist
 
 
     def test_deploy_scaleio(self, options=None, payloadFile=None):
-        workflow = {"name": 'Graph.Deploy.ScaleIo'}
+        with open("./tests/scaleio/scaleio_deploy_payload_example.json") as payload_file:
+            payload = json.load(payload_file)
+
+        print json.dumps(payload, indent=4)
+
         node = self.__nodes[0]
 
         result = fit_common.rackhdapi('/api/2.0/nodes/'
                                       + node +
-                                      '/workflows', action='post', payload=workflow)
+                                      '/workflows', action='post', payload=payload)
 
         self.assertEqual(result['status'], 201,
                          'Was expecting code 201. Got ' + str(result['status']))
