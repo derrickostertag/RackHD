@@ -115,7 +115,7 @@ class deploy_scaleio(unittest.TestCase):
 
         graphId = result['json']['context']['graphId']
 
-        retries = 60
+        retries = 240
         for dummy in range(0, retries):
             result = fit_common.rackhdapi('/api/2.0/workflows/' + graphId, action='get')
             if result['json']['status'] == 'running' or result['json']['status'] == 'Running':
