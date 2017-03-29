@@ -97,7 +97,57 @@ class deploy_scaleio(unittest.TestCase):
         # example to set the class level nodelist
         self.__class__.nodes = nodelist
 
+    def test_deploy_scaleio_no_payload(self, options=None, payloadFile=None):
+        node = self.__nodes[0]
 
+        result = fit_common.rackhdapi('/api/2.0/nodes/'
+                                      + node +
+                                      '/workflows', action='post')
+
+        self.assertEqual(result['status'], 400,
+                         'Was expecting code 400. Got ' + str(result['status']))
+
+
+    def test_deploy_scaleio_bad_payload(self, options=None, payloadFile=None):
+        with open("./tests/scaleio/scaleio_deploy_payload_bad.json") as payload_file:
+            payload = json.load(payload_file)
+
+        print json.dumps(payload, indent=4)
+
+        node = self.__nodes[0]
+
+        result = fit_common.rackhdapi('/api/2.0/nodes/'
+                                      + node +
+                                      '/workflows', action='post', payload=payload)
+
+        self.assertEqual(result['status'], 201,
+                         'Was expecting code 201. Got ' + str(result['status']))
+
+        graphId = result['json']['context']['graphId']
+
+        retries = 30
+        for dummy in range(0, retries):
+            result = fit_common.rackhdapi('/api/2.0/workflows/' + graphId, action='get')
+            if result['json']['status'] == 'running' or result['json']['status'] == 'Running':
+                if fit_common.VERBOSITY >= 2:
+                    # Add print out of workflow
+                    print 'Graph name="{0}"; Graph state="{1}"'.format(result['json']['tasks'][0]['label'], result['json']['status'])
+                fit_common.time.sleep(5)
+            elif result['json']['status'] == 'succeeded':
+                if fit_common.VERBOSITY >= 2:
+                    print "Workflow state: {}".format(result['json']['status'])
+                break 
+            else:
+                if fit_common.VERBOSITY >= 2:
+                    print "Workflow state (unknown): {}".format(result['json']['status'])
+                break
+
+        print "Graph finished  with the following state: " + result['json']['status']
+
+
+        self.assertEqual(result['json']['status'], 'failed',
+                         'Was expecting failed. Got ' + str(result['json']['status']))
+    @depends(after=test_get_nodes, before=test_uninstall_scaleio)
     def test_deploy_scaleio(self, options=None, payloadFile=None):
         with open("./tests/scaleio/scaleio_deploy_payload_example.json") as payload_file:
             payload = json.load(payload_file)
@@ -121,7 +171,7 @@ class deploy_scaleio(unittest.TestCase):
             if result['json']['status'] == 'running' or result['json']['status'] == 'Running':
                 if fit_common.VERBOSITY >= 2:
                     # Add print out of workflow
-                    print "Graph state: {}".format(result['json']['status'])
+                    print 'Graph name="{0}"; Graph state="{1}"'.format(result['json']['tasks'][0]['label'], result['json']['status'])
                 fit_common.time.sleep(10)
             elif result['json']['status'] == 'succeeded':
                 if fit_common.VERBOSITY >= 2:
@@ -138,7 +188,7 @@ class deploy_scaleio(unittest.TestCase):
         self.assertEqual(result['json']['status'], 'succeeded',
                          'Was expecting succeeded. Got ' + result['json']['status'])
 
-
+    @depends(after=test_deploy_scaleio)
     def test_uninstall_scaleio(self, options=None, payloadFile=None):
         payload = {
             "name": "Graph.Uninstall.ScaleIo",
@@ -172,7 +222,7 @@ class deploy_scaleio(unittest.TestCase):
                  if result['json']['status'] == 'running' or result['json']['status'] == 'Running':
                      if fit_common.VERBOSITY >= 2:
                          # Add print out of workflow
-                         print "Graph state: {}".format(result['json']['status'])
+                         print 'Graph name="{0}"; Graph state="{1}"'.format(result['json']['tasks'][0]['label'], result['json']['status'])
                      fit_common.time.sleep(2)
                  elif result['json']['status'] == 'succeeded':
                      if fit_common.VERBOSITY >= 2:
