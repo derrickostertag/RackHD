@@ -169,6 +169,10 @@ def compose_config(use_sysargs=False):
             # stack overlay configuration
             apply_stack_config()
 
+            # apply any additional configurations specified on command line
+            if fitcfg()['cmd-args-list']['extra']:
+                cfg_obj.add_from_file_list(fitcfg()['cmd-args-list']['extra'].split(','))
+
             # add significant environment variables
             cfg_obj.add_from_dict({
                 'env': {
@@ -192,10 +196,8 @@ def apply_stack_config():
     stack = fitargs()['stack']
     if stack is not None:
         mkcfg().add_from_file('stack_config.json', stack)
-        if 'rackhd_host' in fitcfg():
+        if fitargs()['rackhd_host'] == 'localhost' and 'rackhd_host' in fitcfg():
             fitargs()['rackhd_host'] = fitcfg()['rackhd_host']
-        else:
-            fitargs()['rackhd_host'] = 'localhost'
         if 'bmc' in fitcfg():
             fitargs()['bmc'] = fitcfg()['bmc']
         if 'hyper' in fitcfg():
@@ -214,24 +216,18 @@ def add_globals():
     global VERBOSITY
 
     # set api port and protocol from command line
-    if fitargs()['port'] != "None":
-        API_PORT = fitargs()['port']
-
-    if fitargs()['http'] == "True":
+    if fitargs()['http'] is True:
         API_PROTOCOL = "http"
-        if API_PORT == "None":
-            API_PORT = fitports()['http']
-
-    if fitargs()['https'] == "True":
+        API_PORT = str(fitports()['http'])
+    elif fitargs()['https'] is True:
         API_PROTOCOL = "https"
-        if API_PORT == "None":
-            API_PORT = fitports()['https']
+        API_PORT = str(fitports()['https'])
+    else:  # default protocol is http
+        API_PROTOCOL = "http"
+        API_PORT = str(fitports()['http'])
 
-    if fitargs()['rackhd_host'] == "localhost":
-        if API_PROTOCOL == "None":
-            API_PROTOCOL = 'http'
-        if API_PORT == "None":
-            API_PORT = '8080'
+    if fitargs()['port'] != "None":  # port override via command line argument -port
+        API_PORT = fitargs()['port']
 
     # add globals section to base configuration
     TEST_PATH = fit_path.fit_path_root + '/'
@@ -246,7 +242,7 @@ def add_globals():
         }
     })
 
-    # set OVA template from command line
+    # set OVA template from command line argument -template
     if fitargs()["template"] == "None":
         fitargs()["template"] = fitcfg()['install-config']['template']
 
@@ -317,6 +313,8 @@ def mkargs(in_args=None):
                             help="test to execute, default: tests/")
     arg_parser.add_argument("-config", default="config",
                             help="config file location, default: config")
+    arg_parser.add_argument("-extra", default=None,
+                            help="comma separated list of extra config files (found in 'config' directory)")
     arg_parser.add_argument("-group", default="all",
                             help="test group to execute: 'smoke', 'regression', 'extended', default: 'all'")
     arg_parser.add_argument("-stack", default="vagrant",
@@ -447,7 +445,7 @@ def countdown(sleep_time, sleep_interval=1):
 
 
 def remote_shell(shell_cmd, expect_receive="", expect_send="", timeout=300,
-                 address=None, user=None, password=None):
+                 address=None, user=None, password=None, vmnum=1):
     '''
     Run ssh based shell command on a remote machine at fitargs()['rackhd_host']
 
@@ -460,8 +458,13 @@ def remote_shell(shell_cmd, expect_receive="", expect_send="", timeout=300,
     :param password: password of remote host
     :return: dict = {'stdout': str:ouput, 'exitcode': return code}
     '''
+
     if not address:
-        address = fitargs()['rackhd_host']
+        if (vmnum == 1):
+            address = fitargs()['rackhd_host']
+        else:
+            address = fitargs()['rackhd_host'].replace("ora", "ora-" + str(vmnum - 1))
+
     if not user:
         user = fitcreds()['rackhd_host'][0]['username']
     if not password:
@@ -469,6 +472,7 @@ def remote_shell(shell_cmd, expect_receive="", expect_send="", timeout=300,
 
     logfile_redirect = None
     if VERBOSITY >= 4:
+        print "VM number: ", vmnum
         print "remote_shell: Host =", address
         print "remote_shell: Command =", shell_cmd
 
@@ -511,12 +515,12 @@ def remote_shell(shell_cmd, expect_receive="", expect_send="", timeout=300,
     return {'stdout': command_output, 'exitcode': exitstatus}
 
 
-def scp_file_to_ora(src_file_name):
+def scp_file_to_ora(src_file_name, vmnum=1):
     # legacy call
-    scp_file_to_host(src_file_name)
+    scp_file_to_host(src_file_name, vmnum)
 
 
-def scp_file_to_host(src_file_name):
+def scp_file_to_host(src_file_name, vmnum=1):
     '''
     scp the given file over to the RackHD host and place it in the home directory.
 
@@ -532,7 +536,13 @@ def scp_file_to_host(src_file_name):
         remote_shell('cp ' + src_file_name + ' ~/' + src_file_name)
         return src_file_name
 
-    scp_target = fitcreds()['rackhd_host'][0]['username'] + '@{0}:'.format(fitargs()['rackhd_host'])
+    if (vmnum == 1):
+        rackhd_hostname = fitargs()['rackhd_host']
+    else:
+        rackhd_hostname = fitargs()['rackhd_host'].replace("ora", "ora-" + str(vmnum - 1))
+
+    scp_target = fitcreds()['rackhd_host'][0]['username'] + '@{0}:'.format(rackhd_hostname)
+
     cmd = 'scp -o StrictHostKeyChecking=no {0} {1}'.format(src_file_name, scp_target)
     if VERBOSITY >= 4:
         print "scp_file_to_host: '{0}'".format(cmd)
@@ -559,17 +569,17 @@ def get_auth_token():
     api_login = {"username": fitcreds()["api"][0]["admin_user"], "password": fitcreds()["api"][0]["admin_pass"]}
     redfish_login = {"UserName": fitcreds()["api"][0]["admin_user"], "Password": fitcreds()["api"][0]["admin_pass"]}
     try:
-        restful("https://" + fitargs()['rackhd_host'] + ":" + str(API_PORT) +
+        restful("https://" + fitargs()['rackhd_host'] + ":" + str(fitports()['https']) +
                 "/login", rest_action="post", rest_payload=api_login, rest_timeout=2)
     except:
         AUTH_TOKEN = "Unavailable"
         return False
     else:
-        api_data = restful("https://" + fitargs()['rackhd_host'] + ":" + str(API_PORT) +
+        api_data = restful("https://" + fitargs()['rackhd_host'] + ":" + str(fitports()['https']) +
                            "/login", rest_action="post", rest_payload=api_login, rest_timeout=2)
         if api_data['status'] == 200:
             AUTH_TOKEN = str(api_data['json']['token'])
-            redfish_data = restful("https://" + fitargs()['rackhd_host'] + ":" + str(API_PORT) +
+            redfish_data = restful("https://" + fitargs()['rackhd_host'] + ":" + str(fitports()['https']) +
                                    "/redfish/v1/SessionService/Sessions",
                                    rest_action="post", rest_payload=redfish_login, rest_timeout=2)
             if 'x-auth-token' in redfish_data['headers']:
@@ -599,20 +609,6 @@ def rackhdapi(url_cmd, action='get', payload=[], timeout=None, headers={}):
                 'headers':result_data.headers.get('content-type'),
                 'timeout':False}
     '''
-
-    # Automatic protocol selection: unless protocol is specified, test protocols, save settings globally
-    global API_PROTOCOL
-    global API_PORT
-
-    if API_PROTOCOL == "None":
-        if API_PORT == "None":
-            API_PORT = str(fitports()['http'])
-        if restful("http://" + fitargs()['rackhd_host'] + ":" + str(API_PORT) + "/", rest_timeout=2)['status'] == 0:
-            API_PROTOCOL = 'https'
-            API_PORT = str(fitports()['https'])
-        else:
-            API_PROTOCOL = 'http'
-            API_PORT = str(fitports()['http'])
 
     # Retrieve authentication token for the session
     if AUTH_TOKEN == "None":
@@ -820,23 +816,29 @@ def power_control_all_nodes(state):
 
 
 def mongo_reset():
-    # clears the Mongo database on host to default, returns 0 if successful
-    remote_shell('service onrack-conductor stop')
-    remote_shell('/opt/onrack/bin/monorail stop')
-    remote_shell("mongo pxe --eval 'db.dropDatabase\\\(\\\)'")
-    remote_shell('rm -f /var/lib/dhcp/dhcpd.leases')
-    remote_shell('rm -f /var/log/onrack-conductor-event.log')
-    remote_shell('/opt/onrack/bin/monorail start')
-    if remote_shell('service onrack-conductor start')['exitcode'] > 0:
-        return 1
-    return 0
-
-
-def appliance_reset():
-
-    return_code = subprocess.call("ipmitool -I lanplus -H " + fitargs()["bmc"] +
-                                  " -U root -P 1234567 chassis power reset", shell=True)
-    return return_code
+    # clears the Mongo database on host to default, returns True if successful
+    exitcode = 0
+    if int(remote_shell('pm2 stop rackhd-pm2-config.yml')['exitcode']) == 0:  # for pm2-based source installations
+        exitcode = exitcode + int(remote_shell("mongo pxe --eval 'db.dropDatabase\\\(\\\)'")['exitcode'])
+        exitcode = exitcode + int(remote_shell('rm -f /var/lib/dhcp/dhcpd.leases')['exitcode'])
+        exitcode = exitcode + int(remote_shell('pm2 start rackhd-pm2-config.yml')['exitcode'])
+    else:  # for package-based installations
+        exitcode = exitcode + int(remote_shell('sudo service on-http stop')['exitcode'])
+        exitcode = exitcode + int(remote_shell('sudo service on-dhcp-proxy stop')['exitcode'])
+        exitcode = exitcode + int(remote_shell('sudo service on-syslog stop')['exitcode'])
+        exitcode = exitcode + int(remote_shell('sudo service on-taskgraph stop')['exitcode'])
+        exitcode = exitcode + int(remote_shell('sudo service on-tftp stop')['exitcode'])
+        exitcode = exitcode + int(remote_shell("mongo pxe --eval 'db.dropDatabase\\\(\\\)'")['exitcode'])
+        exitcode = exitcode + int(remote_shell('rm -f /var/lib/dhcp/dhcpd.leases')['exitcode'])
+        exitcode = exitcode + int(remote_shell('sudo service on-http start')['exitcode'])
+        exitcode = exitcode + int(remote_shell('sudo service on-dhcp-proxy start')['exitcode'])
+        exitcode = exitcode + int(remote_shell('sudo service on-syslog start')['exitcode'])
+        exitcode = exitcode + int(remote_shell('sudo service on-taskgraph start')['exitcode'])
+        exitcode = exitcode + int(remote_shell('sudo service on-tftp start')['exitcode'])
+    if exitcode == 0:
+        return True
+    else:
+        return False
 
 
 def node_select():
@@ -1056,136 +1058,6 @@ def apply_obm_settings(retry=30):
     # Failures occurred
     print "**** Node(s) OBM settings failed."
     return False
-
-
-def apply_obm_settings_seq():
-    # legacy routine to install OBM credentials via workflows sequentially one-at-a-time
-    count = 0
-    for creds in fitcreds()['bmc']:
-        # greate graph for setting OBM credentials
-        payload = {
-            "friendlyName": "IPMI" + str(count),
-            "injectableName": 'Graph.Obm.Ipmi.CreateSettings' + str(count),
-            "options": {
-                "obm-ipmi-task": {
-                    "user": creds["username"],
-                    "password": creds["password"]
-                }
-            },
-            "tasks": [
-                {
-                    "label": "obm-ipmi-task",
-                    "taskName": "Task.Obm.Ipmi.CreateSettings"
-                }
-            ]
-        }
-        api_data = rackhdapi("/api/2.0/workflows/graphs", action="put", payload=payload)
-        if api_data['status'] != 201:
-            print "**** OBM workflow failed to load!"
-            return False
-        count += 1
-    # Setup additional OBM settings for nodes that currently use RMM port (still same bmc username/password used)
-    count = 0
-    for creds in fitcreds()['bmc']:
-        # greate graph for setting OBM credentials for RMM
-        payload = {
-            "friendlyName": "RMM.IPMI" + str(count),
-            "injectableName": 'Graph.Obm.Ipmi.CreateSettings.RMM' + str(count),
-            "options": {
-                "obm-ipmi-task": {
-                    "ipmichannel": "3",
-                    "user": creds["username"],
-                    "password": creds["password"]
-                }
-            },
-            "tasks": [
-                {
-                    "label": "obm-ipmi-task",
-                    "taskName": "Task.Obm.Ipmi.CreateSettings"
-                }
-            ]
-        }
-        api_data = rackhdapi("/api/2.0/workflows/graphs", action="put", payload=payload)
-        if api_data['status'] != 201:
-            print "**** OBM workflow failed to load!"
-            return False
-        count += 1
-
-    # run each OBM workflow against each node until success
-    nodelist = node_select()
-    failedlist = []
-    for node in nodelist:
-        for num in range(0, count):
-            nodestatus = ""
-            wfstatus = ""
-            skuid = rackhdapi('/api/2.0/nodes/' + node)['json'].get("sku")
-            # Check is sku is empty
-            sku = skuid.rstrip("/api/2.0/skus/")
-            if sku:
-                skudata = rackhdapi(skuid)['text']
-                if "rmm.data.MAC" in skudata:
-                    workflow = {"name": 'Graph.Obm.Ipmi.CreateSettings.RMM' + str(num)}
-                else:
-                    workflow = {"name": 'Graph.Obm.Ipmi.CreateSettings' + str(num)}
-            else:
-                print "*** SKU not set for node ", node
-                nodestatus = "failed"
-                break
-
-            # wait for existing workflow to complete
-            for dummy in range(0, 60):
-                print "*** Using workflow: ", workflow
-                result = rackhdapi("/api/2.0/nodes/" + node + "/workflows", action="post", payload=workflow)
-                if result['status'] != 201:
-                    time.sleep(5)
-                elif dummy == 60:
-                    print "*** Workflow failed to start"
-                    wfstatus = "failed"
-                else:
-                    break
-
-            if wfstatus != "failed":
-                # wait for OBM workflow to complete
-                counter = 0
-                for counter in range(0, 60):
-                    time.sleep(10)
-                    state_data = rackhdapi("/api/2.0/workflows/" + result['json']["instanceId"])
-                    if state_data['status'] == 200:
-                        if "_status" in state_data['json']:
-                            nodestatus = state_data['json']['_status']
-                        else:
-                            nodestatus = state_data['json']['status']
-                        if nodestatus != "running" and nodestatus != "pending":
-                            break
-                if nodestatus == "succeeded":
-                    print "*** Succeeded on workflow ", workflow
-                    break
-                if counter == 60:
-                    # print "Timed out status", nodestatus
-                    nodestatus = "failed"
-                    print "*** Node failed OBM settings - timeout:", node
-                    print "*** Failed on workflow ", workflow
-
-        # check final loop status for node workflow
-        if wfstatus == "failed" or nodestatus == "failed":
-            failedlist.append(node)
-
-    # cleanup failed nodes OBM settings on nodes, need to remove failed settings
-    for node in failedlist:
-        result = rackhdapi("/api/2.0/nodes/" + node)
-        if result['status'] == 200:
-            if result['json']['obms']:
-                obms = result['json']['obms'][0]
-                obmref = obms.get('ref')
-                if obmref:
-                    result = rackhdapi(obmref, action="delete")
-                    if result['status'] != 204:
-                        print "*** Warning: failed to delete invalid OBM setting ", obmref
-
-    if len(failedlist) > 0:
-        print "**** Nodes failed OBM settings:", failedlist
-        return False
-    return True
 
 
 def run_nose(nosepath=None):
