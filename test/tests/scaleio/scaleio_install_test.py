@@ -12,7 +12,7 @@ put something herex`
 import fit_path  # NOQA: unused import
 import unittest
 import json
-
+import test_api_utils
 
 # import nose decorator attr
 from nose.plugins.attrib import attr
@@ -27,6 +27,7 @@ from common import fit_common
 
 # set up the logging
 logs = flogging.get_loggers()
+PAYLOAD = []
 
 # Define the test group here using unittest @attr
 # @attr is a decorator and must be located in the line just above the class to be labeled
@@ -51,31 +52,13 @@ class deploy_scaleio(unittest.TestCase):
         # This removes the docstrings (""") from the unittest test list (collect-only)
         return None
 
-
-#    @depends(after=test_first)
-    def test_get_nodes(self):
-        """
-        This test is an example of using fit_common.node_select to retrieve a node list.
-        For demo purposes, it needs communication to a running rackhd instance or will fail.
-        """
-        nodes = []
-        # Retrive list of nodes, default gets compute nodes
-        nodes = fit_common.node_select()
-
-        # Check if any nodes returned
-        self.assertNotEqual([], nodes, msg=("No Nodes in List"))
-
-        # Log the list of nodes
-        logs.info(" %s", json.dumps(nodes, indent=4))
-
-#    @depends(after=test_get_nodes)
-    def test_get_nodes_rackhdapi(self):
+    def test_modify_payload_template(self):
         """
         This test is an example of using fit_common.rackhdapi() to perform an API call
         and using data from the response.
         For demo purposes, it needs communication to a running rackhd instance.
         """
-        nodes = []
+        global PAYLOAD
         nodelist = []
 
         # Perform an API call
@@ -91,12 +74,36 @@ class deploy_scaleio(unittest.TestCase):
         except:
             self.fail("No Json data in repsonse")
         for node in nodes:
-            nodelist.append(node.get('id'))
-        logs.info(" %s", json.dumps(nodelist, indent=4))
+            nodetype = node['type']
+            if nodetype == "compute":
+                nodeid = node['id']
+                nodename = test_api_utils.get_rackhd_nodetype(nodeid)
+                if nodename == "Quanta T41":
+                    nodelist.append(nodeid)
 
-        # example to set the class level nodelist
-        self.__class__.nodes = nodelist
+        configfile = fit_common.json.loads(open("./tests/scaleio/scaleio_payload_template.json").read())
 
+#        print "****** PRINTING OLD PAYLOAD *********"
+#        print json.dumps(configfile, indent=4)
+
+        for key, value in configfile.items():
+            if key == "options":
+                for subkey, subvalue in value.items():
+                    if subvalue["graphOptions"]["target"] == "master_node_id":
+                        subvalue["graphOptions"]["target"] = nodelist[0]
+                    elif subvalue["graphOptions"]["target"] == "standby_node_id":
+                        subvalue["graphOptions"]["target"] = nodelist[1]
+                    elif subvalue["graphOptions"]["target"] == "tie_breaker_node_id":
+                        subvalue["graphOptions"]["target"] = nodelist[2]
+                    else :
+                        print 'Invalid target string = "{0}"'.format(subvalue["graphOptions"]["target"])
+
+#        print "****** PRINTING NEW PAYLOAD *********"
+#        print json.dumps(configfile, indent=4)
+
+        PAYLOAD = json.dumps(configfile)
+
+    @fit_common.unittest.skip("Skipping test_deploy_scaleio_no_payload")
     def test_deploy_scaleio_no_payload(self, options=None, payloadFile=None):
         node = self.__nodes[0]
 
@@ -107,7 +114,7 @@ class deploy_scaleio(unittest.TestCase):
         self.assertEqual(result['status'], 400,
                          'Was expecting code 400. Got ' + str(result['status']))
 
-
+    @fit_common.unittest.skip("Skipping test_deploy_scaleio_bad_payload")
     def test_deploy_scaleio_bad_payload(self, options=None, payloadFile=None):
         with open("./tests/scaleio/scaleio_deploy_payload_bad.json") as payload_file:
             payload = json.load(payload_file)
@@ -118,7 +125,7 @@ class deploy_scaleio(unittest.TestCase):
 
         result = fit_common.rackhdapi('/api/2.0/nodes/'
                                       + node +
-                                      '/workflows', action='post', payload=payload)
+                                      '/workflows', action='post', payload=PAYLOAD)
 
         self.assertEqual(result['status'], 201,
                          'Was expecting code 201. Got ' + str(result['status']))
@@ -147,14 +154,18 @@ class deploy_scaleio(unittest.TestCase):
 
         self.assertEqual(result['json']['status'], 'failed',
                          'Was expecting failed. Got ' + str(result['json']['status']))
-#    @depends(after=test_get_nodes, before=test_uninstall_scaleio)
+
+#    @depends(after=test_modify_payload_template)
+    @fit_common.unittest.skip("Skipping test_deploy_scaleio")
     def test_deploy_scaleio(self, options=None, payloadFile=None):
         with open("./tests/scaleio/scaleio_deploy_payload_example.json") as payload_file:
             payload = json.load(payload_file)
 
-        print json.dumps(payload, indent=4)
+       # print json.dumps(payload, indent=4)
+        print PAYLOAD
 
         node = self.__nodes[0]
+        print node
 
         result = fit_common.rackhdapi('/api/2.0/nodes/'
                                       + node +
@@ -189,6 +200,7 @@ class deploy_scaleio(unittest.TestCase):
         self.assertEqual(result['json']['status'], 'succeeded',
                          'Was expecting succeeded. Got ' + result['json']['status'])
 
+    @fit_common.unittest.skip("Skipping test_uninstall_scaleio")
 #    @depends(after=test_deploy_scaleio)
     def test_uninstall_scaleio(self, options=None, payloadFile=None):
         payload = {
