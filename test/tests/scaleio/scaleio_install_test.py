@@ -12,6 +12,7 @@ put something herex`
 import fit_path  # NOQA: unused import
 import unittest
 import json
+import os
 import test_api_utils
 
 # import nose decorator attr
@@ -52,7 +53,7 @@ class deploy_scaleio(unittest.TestCase):
         # This removes the docstrings (""") from the unittest test list (collect-only)
         return None
 
-    def test_modify_payload_template(self):
+    def test_build_solution_pack(self):
         """
         This test is an example of using fit_common.rackhdapi() to perform an API call
         and using data from the response.
@@ -81,10 +82,7 @@ class deploy_scaleio(unittest.TestCase):
                 if nodename == "Quanta T41":
                     nodelist.append(nodeid)
 
-        configfile = fit_common.json.loads(open("./tests/scaleio/scaleio_payload_template.json").read())
-
-#        print "****** PRINTING OLD PAYLOAD *********"
-#        print json.dumps(configfile, indent=4)
+        configfile = fit_common.json.loads(open("../../solution-pack/scaleio/payload/scaleio_payload_template.json").read())
 
         for key, value in configfile.items():
             if key == "options":
@@ -98,10 +96,14 @@ class deploy_scaleio(unittest.TestCase):
                     else :
                         print 'Invalid target string = "{0}"'.format(subvalue["graphOptions"]["target"])
 
-#        print "****** PRINTING NEW PAYLOAD *********"
-#        print json.dumps(configfile, indent=4)
+        PAYLOAD = json.dumps(configfile, indent=4)
+        with open('../../solution-pack/scaleio/payload/payload.json', 'w') as outfile:
+            outfile.write(json.dumps(configfile, indent=4))
+            outfile.write('\n')
 
-        PAYLOAD = json.dumps(configfile)
+        # Build Solution Package
+        os.chdir("../../solution-pack/scaleio")
+        os.system("./build_solution_pack.sh")
 
     @fit_common.unittest.skip("Skipping test_deploy_scaleio_no_payload")
     def test_deploy_scaleio_no_payload(self, options=None, payloadFile=None):
@@ -155,10 +157,32 @@ class deploy_scaleio(unittest.TestCase):
         self.assertEqual(result['json']['status'], 'failed',
                          'Was expecting failed. Got ' + str(result['json']['status']))
 
-#    @depends(after=test_modify_payload_template)
+    @depends(after=test_build_solution_pack)
+#    @fit_common.unittest.skip("Skipping test_deploy_solution_pack")
+    def test_deploy_solution_pack(self, options=None, payloadFile=None):
+        node = self.__nodes[0]
+
+        filename = fit_common.scp_file_to_host("../../solution-pack/scaleio/scaleio.tar.gz")
+        print 'Copy "{}" to Host complete'.format(filename)
+
+        self.assertEqual(fit_common.remote_shell('tar xzvf scaleio.tar.gz')['exitcode'],
+                         0, "Untar failure")
+
+        print 'Untar "{}" complete'.format(filename)
+
+        deploy_command = './scripts/deploy.sh ' + node
+        print deploy_command
+
+        self.assertEqual(fit_common.remote_shell(deploy_command)['exitcode'],
+                         0, "Deploy failure")
+
+        print 'Deploying ScaleIO Solution Pack'
+
+
+    @depends(after=test_build_solution_pack)
     @fit_common.unittest.skip("Skipping test_deploy_scaleio")
     def test_deploy_scaleio(self, options=None, payloadFile=None):
-        with open("./tests/scaleio/scaleio_deploy_payload_example.json") as payload_file:
+        with open("../../solution-pack/scaleio/payload/payload.json") as payload_file:
             payload = json.load(payload_file)
 
        # print json.dumps(payload, indent=4)
