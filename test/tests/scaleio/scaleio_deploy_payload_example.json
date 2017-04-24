@@ -1,13 +1,61 @@
 {
     "name": "Graph.Deploy.ScaleIo",
     "options": {
+      "update-firmware-mdm-master-graph": {
+          "graphOptions": {
+              "target": "58f92030310a5e770739807c",
+              "defaults": {
+              "serverUsername": "onrack",
+              "serverPassword": "onrack",
+              "serverFilePath": "/home/onrack/static/firmware/BIOS_12RN6_WN64_2.4.2.EXE"
+              }
+          }
+      },
+      "update-firmware-mdm-standby-graph": {
+          "graphOptions": {
+              "target": "58cb0459cb5361300e98f0e9",
+              "defaults": {
+              "serverUsername": "onrack",
+              "serverPassword": "onrack",
+              "serverFilePath": "/home/onrack/static/firmware/BIOS_12RN6_WN64_2.4.2.EXE"
+              }
+          }
+      },
+      "update-firmware-tb-graph": {
+          "graphOptions": {
+              "target": "58cb00efcb5361300e98f0dc",
+              "defaults": {
+              "serverUsername": "onrack",
+              "serverPassword": "onrack",
+              "serverFilePath": "/home/onrack/static/firmware/BIOS_12RN6_WN64_2.4.2.EXE"
+              }
+
+          }
+      },
+      "run-diagnostics-mdm-master-graph": {
+          "graphOptions": {
+              "target": "58f92030310a5e770739807c"
+          }
+      },
+      "run-diagnostics-mdm-standby-graph": {
+          "graphOptions": {
+              "target": "58cb0459cb5361300e98f0e9"
+          }
+      },
+      "run-diagnostics-tb-graph": {
+          "graphOptions": {
+              "target": "58cb00efcb5361300e98f0dc"
+          }
+      },
+
       "install-os-mdm-master-graph": {
            "graphOptions": {
-              "target": "58e2bf4dba588e2a7b597473",
+              "target": "58f92030310a5e770739807c",
               "defaults": {
                  "version": "7",
                  "repo": "http://172.31.128.1:9080/CentOS/7.0",
                  "rootPassword": "onrack",
+                 "installDisk" : "/dev/disk/by-id/scsi-35000c5008ed1de0f",
                  "hostname": "mdm1",
                  "users": [
                      {
@@ -18,7 +66,7 @@
                  ],
                  "networkDevices": [
                      {
-                         "device": "ens20f1",
+                         "device": "em1",
                          "ipv4": {
                              "ipAddr": "172.31.128.120",
                              "gateway": "172.31.128.1",
@@ -32,7 +80,7 @@
        },
        "install-os-mdm-standby-graph": {
            "graphOptions": {
-              "target": "58e2bf51ba588e2a7b59748b",
+              "target": "58cb0459cb5361300e98f0e9",
               "defaults": {
                  "version": "7",
                  "repo": "http://172.31.128.1:9080/CentOS/7.0",
@@ -47,7 +95,7 @@
                  ],
                  "networkDevices": [
                      {
-                         "device": "ens20f1",
+                         "device": "em1",
                          "ipv4": {
                              "ipAddr": "172.31.128.130",
                              "gateway": "172.31.128.1",
@@ -61,7 +109,7 @@
        },
        "install-os-tb-graph": {
            "graphOptions": {
-              "target": "58e2bf4fba588e2a7b59747f",
+              "target": "58cb00efcb5361300e98f0dc",
               "defaults": {
                  "version": "7",
                  "repo": "http://172.31.128.1:9080/CentOS/7.0",
@@ -76,7 +124,7 @@
                  ],
                  "networkDevices": [
                      {
-                         "device": "ens20f1",
+                         "device": "em1",
                          "ipv4": {
                              "ipAddr": "172.31.128.140",
                              "gateway": "172.31.128.1",
@@ -90,7 +138,7 @@
        },
        "install-mdm-master-graph": {
            "graphOptions": {
-              "target": "58e2bf4dba588e2a7b597473",
+              "target": "58f92030310a5e770739807c",
               "defaults": {
                  "path": "/tmp",
                  "username": "root",
@@ -101,7 +149,7 @@
        },
        "install-mdm-standby-graph": {
            "graphOptions": {
-              "target": "58e2bf51ba588e2a7b59748b",
+              "target": "58cb0459cb5361300e98f0e9",
               "defaults": {
                  "path": "/tmp",
                  "username": "root",
@@ -112,7 +160,7 @@
        },
        "install-tb-graph": {
            "graphOptions": {
-              "target": "58e2bf4fba588e2a7b59747f",
+              "target": "58cb00efcb5361300e98f0dc",
               "defaults": {
                  "path": "/tmp",
                  "username": "root",
@@ -123,7 +171,7 @@
        },
        "cluster-scaleio-3node-graph": {
            "graphOptions": {
-              "target": "58e2bf4dba588e2a7b597473",
+              "target": "58f92030310a5e770739807c",
               "defaults": {
                  "username": "root",
                  "password": "onrack",
