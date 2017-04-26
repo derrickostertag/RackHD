@@ -32,6 +32,54 @@
 
           }
       },
+      "secure-erase-master-graph": {
+          "graphOptions": {
+            "drive-secure-erase":{
+                "eraseSettings": [
+                    {
+                        "disks":["sda"],
+                        "tool":"scrub",
+                        "arg": "nnsa"
+                    }
+                ]
+            },
+            "disk-scan-delay": {
+                "duration": 60000
+            }
+        }
+      },
+      "secure-erase-standby-graph": {
+          "graphOptions": {
+            "drive-secure-erase":{
+                "eraseSettings": [
+                    {
+                        "disks":["sda"],
+                        "tool":"scrub",
+                        "arg": "nnsa"
+                    }
+                ]
+            },
+            "disk-scan-delay": {
+                "duration": 60000
+            }
+        }
+      },
+      "secure-erase-tb-graph": {
+          "graphOptions": {
+            "drive-secure-erase":{
+                "eraseSettings": [
+                    {
+                        "disks":["sda"],
+                        "tool":"scrub",
+                        "arg": "nnsa"
+                    }
+                ]
+            },
+            "disk-scan-delay": {
+                "duration": 60000
+            }
+        }
+      },
       "run-diagnostics-mdm-master-graph": {
           "graphOptions": {
               "target": "58f92030310a5e770739807c"
