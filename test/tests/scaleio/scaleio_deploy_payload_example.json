@@ -34,51 +34,54 @@
       },
       "secure-erase-master-graph": {
           "graphOptions": {
-            "drive-secure-erase":{
-                "eraseSettings": [
-                    {
-                        "disks":["sda"],
-                        "tool":"scrub",
-                        "arg": "nnsa"
-                    }
-                ]
-            },
-            "disk-scan-delay": {
-                "duration": 60000
-            }
-        }
+              "target": "58f92030310a5e770739807c",
+              "drive-secure-erase":{
+                  "eraseSettings": [
+                      {
+                          "disks":["sda"],
+                          "tool":"scrub",
+                          "arg": "nnsa"
+                      }
+                  ]
+              },
+              "disk-scan-delay": {
+                  "duration": 60000
+              }
+          }
       },
       "secure-erase-standby-graph": {
           "graphOptions": {
-            "drive-secure-erase":{
-                "eraseSettings": [
-                    {
-                        "disks":["sda"],
-                        "tool":"scrub",
-                        "arg": "nnsa"
-                    }
-                ]
-            },
-            "disk-scan-delay": {
-                "duration": 60000
-            }
-        }
+              "target": "58cb0459cb5361300e98f0e9",
+              "drive-secure-erase":{
+                  "eraseSettings": [
+                      {
+                          "disks":["sda"],
+                          "tool":"scrub",
+                          "arg": "nnsa"
+                      }
+                  ]
+              },
+              "disk-scan-delay": {
+                  "duration": 60000
+              }
+          }
       },
       "secure-erase-tb-graph": {
           "graphOptions": {
-            "drive-secure-erase":{
-                "eraseSettings": [
-                    {
-                        "disks":["sda"],
-                        "tool":"scrub",
-                        "arg": "nnsa"
-                    }
-                ]
-            },
-            "disk-scan-delay": {
-                "duration": 60000
-            }
-        }
+              "target": "58cb00efcb5361300e98f0dc",
+              "drive-secure-erase":{
+                  "eraseSettings": [
+                      {
+                          "disks":["sda"],
+                          "tool":"scrub",
+                          "arg": "nnsa"
+                      }
+                  ]
+              },
+              "disk-scan-delay": {
+                  "duration": 60000
+              }
+          }
       },
       "run-diagnostics-mdm-master-graph": {
           "graphOptions": {
