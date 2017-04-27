@@ -1,7 +1,7 @@
 {
     "name": "Graph.Deploy.ScaleIo",
     "options": {
-      "update-firmware-mdm-master-graph": {
+      "update-firmware-master-graph": {
           "graphOptions": {
               "target": "58f92030310a5e770739807c",
               "defaults": {
@@ -11,7 +11,7 @@
               }
           }
       },
-      "update-firmware-mdm-standby-graph": {
+      "update-firmware-standby-graph": {
           "graphOptions": {
               "target": "58cb0459cb5361300e98f0e9",
               "defaults": {
@@ -34,58 +34,61 @@
       },
       "secure-erase-master-graph": {
           "graphOptions": {
-            "drive-secure-erase":{
-                "eraseSettings": [
-                    {
-                        "disks":["sda"],
-                        "tool":"scrub",
-                        "arg": "nnsa"
-                    }
-                ]
-            },
-            "disk-scan-delay": {
-                "duration": 60000
-            }
-        }
+              "target": "58f92030310a5e770739807c",
+              "drive-secure-erase":{
+                  "eraseSettings": [
+                      {
+                          "disks":["sda"],
+                          "tool":"scrub",
+                          "arg": "nnsa"
+                      }
+                  ]
+              },
+              "disk-scan-delay": {
+                  "duration": 60000
+              }
+          }
       },
       "secure-erase-standby-graph": {
           "graphOptions": {
-            "drive-secure-erase":{
-                "eraseSettings": [
-                    {
-                        "disks":["sda"],
-                        "tool":"scrub",
-                        "arg": "nnsa"
-                    }
-                ]
-            },
-            "disk-scan-delay": {
-                "duration": 60000
-            }
-        }
+              "target": "58cb0459cb5361300e98f0e9",
+              "drive-secure-erase":{
+                  "eraseSettings": [
+                      {
+                          "disks":["sda"],
+                          "tool":"scrub",
+                          "arg": "nnsa"
+                      }
+                  ]
+              },
+              "disk-scan-delay": {
+                  "duration": 60000
+              }
+          }
       },
       "secure-erase-tb-graph": {
           "graphOptions": {
-            "drive-secure-erase":{
-                "eraseSettings": [
-                    {
-                        "disks":["sda"],
-                        "tool":"scrub",
-                        "arg": "nnsa"
-                    }
-                ]
-            },
-            "disk-scan-delay": {
-                "duration": 60000
-            }
-        }
+              "target": "58cb00efcb5361300e98f0dc",
+              "drive-secure-erase":{
+                  "eraseSettings": [
+                      {
+                          "disks":["sda"],
+                          "tool":"scrub",
+                          "arg": "nnsa"
+                      }
+                  ]
+              },
+              "disk-scan-delay": {
+                  "duration": 60000
+              }
+          }
       },
-      "run-diagnostics-mdm-master-graph": {
+      "run-diagnostics-master-graph": {
           "graphOptions": {
               "target": "58f92030310a5e770739807c"
           }
       },
-      "run-diagnostics-mdm-standby-graph": {
+      "run-diagnostics-standby-graph": {
           "graphOptions": {
               "target": "58cb0459cb5361300e98f0e9"
           }
@@ -95,8 +98,7 @@
               "target": "58cb00efcb5361300e98f0dc"
           }
       },
-
-      "install-os-mdm-master-graph": {
+      "install-os-master-graph": {
            "graphOptions": {
               "target": "58f92030310a5e770739807c",
               "defaults": {
@@ -126,7 +128,7 @@
               }
            }
        },
-       "install-os-mdm-standby-graph": {
+       "install-os-standby-graph": {
            "graphOptions": {
               "target": "58cb0459cb5361300e98f0e9",
               "defaults": {
