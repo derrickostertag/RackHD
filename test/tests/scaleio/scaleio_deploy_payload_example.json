@@ -3,7 +3,7 @@
     "options": {
       "update-firmware-master-graph": {
           "graphOptions": {
-              "target": "58f92030310a5e770739807c",
+              "target": "5903cbd2e616feea0837572f",
               "defaults": {
               "serverUsername": "onrack",
               "serverPassword": "onrack",
@@ -13,7 +13,7 @@
       },
       "update-firmware-standby-graph": {
           "graphOptions": {
-              "target": "58cb0459cb5361300e98f0e9",
+              "target": "5903c116e616feea0837572b",
               "defaults": {
               "serverUsername": "onrack",
               "serverPassword": "onrack",
@@ -23,7 +23,7 @@
       },
       "update-firmware-tb-graph": {
           "graphOptions": {
-              "target": "58cb00efcb5361300e98f0dc",
+              "target": "5903ccfce616feea08375730",
               "defaults": {
               "serverUsername": "onrack",
               "serverPassword": "onrack",
@@ -34,7 +34,7 @@
       },
       "secure-erase-master-graph": {
           "graphOptions": {
-              "target": "58f92030310a5e770739807c",
+              "target": "5903cbd2e616feea0837572f",
               "drive-secure-erase":{
                   "eraseSettings": [
                       {
@@ -51,7 +51,7 @@
       },
       "secure-erase-standby-graph": {
           "graphOptions": {
-              "target": "58cb0459cb5361300e98f0e9",
+              "target": "5903c116e616feea0837572b",
               "drive-secure-erase":{
                   "eraseSettings": [
                       {
@@ -68,7 +68,7 @@
       },
       "secure-erase-tb-graph": {
           "graphOptions": {
-              "target": "58cb00efcb5361300e98f0dc",
+              "target": "5903ccfce616feea08375730",
               "drive-secure-erase":{
                   "eraseSettings": [
                       {
@@ -85,22 +85,22 @@
       },
       "run-diagnostics-master-graph": {
           "graphOptions": {
-              "target": "58f92030310a5e770739807c"
+              "target": "5903cbd2e616feea0837572f"
           }
       },
       "run-diagnostics-standby-graph": {
           "graphOptions": {
-              "target": "58cb0459cb5361300e98f0e9"
+              "target": "5903c116e616feea0837572b"
           }
       },
       "run-diagnostics-tb-graph": {
           "graphOptions": {
-              "target": "58cb00efcb5361300e98f0dc"
+              "target": "5903ccfce616feea08375730"
           }
       },
       "install-os-master-graph": {
            "graphOptions": {
-              "target": "58f92030310a5e770739807c",
+              "target": "5903cbd2e616feea0837572f",
               "defaults": {
                  "version": "7",
                  "repo": "http://172.31.128.1:9080/CentOS/7.0",
@@ -130,7 +130,7 @@
        },
        "install-os-standby-graph": {
            "graphOptions": {
-              "target": "58cb0459cb5361300e98f0e9",
+              "target": "5903c116e616feea0837572b",
               "defaults": {
                  "version": "7",
                  "repo": "http://172.31.128.1:9080/CentOS/7.0",
@@ -159,7 +159,7 @@
        },
        "install-os-tb-graph": {
            "graphOptions": {
-              "target": "58cb00efcb5361300e98f0dc",
+              "target": "5903ccfce616feea08375730",
               "defaults": {
                  "version": "7",
                  "repo": "http://172.31.128.1:9080/CentOS/7.0",
@@ -188,7 +188,7 @@
        },
        "install-mdm-master-graph": {
            "graphOptions": {
-              "target": "58f92030310a5e770739807c",
+              "target": "5903cbd2e616feea0837572f",
               "defaults": {
                  "path": "/tmp",
                  "username": "root",
@@ -199,7 +199,7 @@
        },
        "install-mdm-standby-graph": {
            "graphOptions": {
-              "target": "58cb0459cb5361300e98f0e9",
+              "target": "5903c116e616feea0837572b",
               "defaults": {
                  "path": "/tmp",
                  "username": "root",
@@ -210,7 +210,7 @@
        },
        "install-tb-graph": {
            "graphOptions": {
-              "target": "58cb00efcb5361300e98f0dc",
+              "target": "5903ccfce616feea08375730",
               "defaults": {
                  "path": "/tmp",
                  "username": "root",
@@ -221,7 +221,7 @@
        },
        "cluster-scaleio-3node-graph": {
            "graphOptions": {
-              "target": "58f92030310a5e770739807c",
+              "target": "5903cbd2e616feea0837572f",
               "defaults": {
                  "username": "root",
                  "password": "onrack",
